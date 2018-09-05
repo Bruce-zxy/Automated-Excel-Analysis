@@ -1,11 +1,11 @@
 # encoding:utf-8
 import sys
-import io
 import os
+import io
 import time
+import operator
 from selenium import webdriver
 from xlrd import open_workbook
-import operator
 from functools import reduce
 
 # 系统编码格式
@@ -17,16 +17,23 @@ defaultPath = os.getcwd() + '\\'
 handleFile  = defaultPath + time.strftime("%Y-%m-%d", time.localtime()) + '.order.xls'
 
 # 全局变量
-classification_of_the_scenic_filename      = './景区分类.txt'.decode('utf-8').encode('gbk')
+classification_of_the_scenic_filename      = defaultPath + '景区分类.txt'.decode('utf-8').encode('gbk')
 classification_of_the_scenic               = {}
-supplier_partial_invoices_provide_filename = './部分开票供应商.txt'.decode('utf-8').encode('gbk')
+supplier_partial_invoices_provide_filename = defaultPath + '部分开票供应商.txt'.decode('utf-8').encode('gbk')
 supplier_partial_invoices_provide          = {}
-supplier_all_invoices_provide_filename     = './全开票供应商.txt'.decode('utf-8').encode('gbk')
+supplier_all_invoices_provide_filename     = defaultPath + '全开票供应商.txt'.decode('utf-8').encode('gbk')
 supplier_all_invoices_provide              = []
 object_index                               = ''
 
-def AnalysisExcel():
-	print('【###】OpenExcelFile：'.decode('utf-8').encode('gbk') + handleFile)
+def AnalysisExcel(browser):
+	print('【###】正在打开Excel文件：'.decode('utf-8').encode('gbk') + handleFile)
+
+	if not os.path.exists(handleFile):
+		time.sleep(5)
+		print('Excel文件不存在，可能正在下载中...请稍候...'.decode('utf-8').encode('gbk'))
+		return AnalysisExcel(browser)
+	else:
+		browser.quit()
 
 	# 总行列数
 	rows_counts = 0
@@ -96,35 +103,19 @@ def AnalysisExcel():
 		for kind in classification_of_the_scenic:
 			for scenic in classification_of_the_scenic[kind]:
 				flag = True
-				print(scenic)
 				name = reduce(operator.add, scenic)
-				# print(name.encode('gbk'))
 				for subname in scenic:
 					if subname in curr_val[productName_index]:
 						flag = flag and True
 					else :
 						flag = flag and False
 				if flag and excel_scenic_sum[kind].has_key(name):
-
 					excel_scenic_sum[kind][name] += int(curr_val[orderPerson_index])
-					print('!!--', excel_scenic_sum[kind][name])
-					# if name == '灵山':
-					# 	print('灵山'.encode('gbk'), excel_scenic_sum[kind][name])
 				elif flag:
 					excel_scenic_sum[kind][name] = int(curr_val[orderPerson_index])
-					print(excel_scenic_sum[kind][name])
 
 
-	print('流水金额：'.decode('utf-8').encode('gbk'))
-	print(sales_amount_sum)
-	print('订单人数：'.decode('utf-8').encode('gbk'))
-	print(int(order_person_sum))
-	print('实际营收：'.decode('utf-8').encode('gbk'))
-	print(sales_invoice_sum)
-
-	print(excel_scenic_sum)
-
-	with open('./今日景区汇总.txt'.decode('utf-8').encode('gbk'), 'w') as f:
+	with open(defaultPath + '今日景区汇总.txt'.decode('utf-8').encode('gbk'), 'w') as f:
 		f.write('景区情况：\n'.decode())
 		f.write('订单人数：'.decode() + str(int(order_person_sum)) + '张\n'.decode())
 		f.write('流水金额：'.decode() + str(sales_amount_sum) + '元\n'.decode())
@@ -135,10 +126,10 @@ def AnalysisExcel():
 			serial += 1
 			for scenic_name in excel_scenic_sum[kind]:
 				f.write(scenic_name + str(excel_scenic_sum[kind][scenic_name]) + '张\n'.decode())
+	# os.remove(handleFile)
 
-
-def GetSupplierAllInvoicesProvide():
-	print('【###】GetSupplierAllInvoicesProvide'.decode('utf-8').encode('gbk'))
+def GetSupplierAllInvoicesProvide(browser):
+	print('【###】正在获取能全部开发票的供应商列表...'.decode('utf-8').encode('gbk'))
 	with io.open(supplier_all_invoices_provide_filename, 'r') as f:
 		for line in f.readlines():
 			line = line.strip("\r\n")
@@ -146,11 +137,10 @@ def GetSupplierAllInvoicesProvide():
 				continue
 			else :
 				supplier_all_invoices_provide.append(line)
-	print supplier_all_invoices_provide
-	AnalysisExcel()
+	AnalysisExcel(browser)
 
-def GetSupplierPartialInvoicesProvide():
-	print('【###】GetSupplierPartialInvoicesProvide'.decode('utf-8').encode('gbk'))
+def GetSupplierPartialInvoicesProvide(browser):
+	print('【###】正在获取能部分开发票的供应商列表...'.decode('utf-8').encode('gbk'))
 	with io.open(supplier_partial_invoices_provide_filename, 'r') as f:
 		for line in f.readlines():
 			line = line.strip("\r\n")
@@ -161,11 +151,10 @@ def GetSupplierPartialInvoicesProvide():
 				supplier_partial_invoices_provide[object_index] = []
 			else :
 				supplier_partial_invoices_provide[object_index].append(line.split('，'))
-	print supplier_partial_invoices_provide
-	GetSupplierAllInvoicesProvide()
+	GetSupplierAllInvoicesProvide(browser)
 
-def GetClassificationOfTheScenic():
-	print('【###】GetClassificationOfTheScenic'.decode('utf-8').encode('gbk'))
+def GetClassificationOfTheScenic(browser):
+	print('【###】正在获取所有景区的分类...'.decode('utf-8').encode('gbk'))
 	with io.open(classification_of_the_scenic_filename, 'r') as f:
 		for line in f.readlines():
 			line = line.strip("\r\n")
@@ -176,11 +165,71 @@ def GetClassificationOfTheScenic():
 				classification_of_the_scenic[object_index] = []
 			else :
 				classification_of_the_scenic[object_index].append(line.split('，'))
-	print classification_of_the_scenic
-	GetSupplierPartialInvoicesProvide()
+	GetSupplierPartialInvoicesProvide(browser)
 
+
+def startWebdriver(uname, upass):
+	print("您在config.txt中配置的【用户名】为：".decode('UTF-8').encode('GBK') + uname)
+	print("您在config.txt中配置的【密  码】为：".decode('UTF-8').encode('GBK') + upass)
+	# 配置浏览器驱动
+	options = webdriver.ChromeOptions()
+	# options.set_headless()
+	options.add_experimental_option('prefs', {'profile.default_content_settings.popups': 0, 'download.default_directory': defaultPath})
+
+	# 启动浏览器驱动
+	browser = webdriver.Chrome(executable_path=defaultPath + 'chromedriver.exe', chrome_options=options)
+	# 打开网页
+	browser.get('http://www.goyoto.com.cn/')
+
+	# 输入用户名
+	username = browser.find_element_by_name('username')
+	username.clear()
+	username.send_keys(uname)
+
+	# 输入密码
+	password = browser.find_element_by_name('password')
+	password.clear()
+	password.send_keys(upass)
+
+	# 点击登录
+	browser.find_element_by_css_selector('.sub_btn input').submit()
+
+	# 等待跳转
+	browser.implicitly_wait(3)
+	# 解决弹窗
+	browser.switch_to_alert().accept();
+
+	# 切换frame
+	browser.switch_to_frame(browser.find_element_by_name('fracmd'))
+	browser.find_element_by_id('12').find_element_by_tag_name('a').click()
+
+	# 切换回主内容
+	browser.switch_to_default_content()
+
+	# 切换frame
+	browser.switch_to_frame(browser.find_element_by_name('main'))
+	browser.find_elements_by_css_selector('#day_span a')[0].click()
+	browser.find_element_by_name('export').click()
+
+	# 将导出的表进行分析
+	GetClassificationOfTheScenic(browser)
+	
 def main():
-	GetClassificationOfTheScenic()
+	if os.path.exists(handleFile):
+		os.remove(handleFile)
+	try:
+		userInfo = []
+		f=open(defaultPath + 'config.txt', 'r')
+		for line in f.readlines():
+			userInfo.append(line.strip('\n'))
+		f.close()
+		startWebdriver(userInfo[0], userInfo[1])
+	except Exception as e:
+		print(e)
+		exit()
+	finally:
+		if f:
+			f.close()
 
 if __name__ == '__main__':
 	main()
