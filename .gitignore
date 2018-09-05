@@ -68,3 +68,5 @@ typings/
 *.xls
 *.txt
 !*.exe
+/build
+/dist

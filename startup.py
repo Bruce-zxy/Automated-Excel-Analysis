@@ -80,6 +80,8 @@ def AnalysisExcel(browser):
 			continue
 		elif '已取消' in curr_val[orderState_index] or '待支付' in curr_val[orderState_index]:
 			continue
+		elif '床' in curr_val[productName_index]:
+			continue
 
 		# 统计人数和流水金额
 		sales_amount_sum += curr_val[salesAmount_index]
@@ -115,8 +117,9 @@ def AnalysisExcel(browser):
 					excel_scenic_sum[kind][name] = int(curr_val[orderPerson_index])
 
 
-	with open(defaultPath + '今日景区汇总.txt'.decode('utf-8').encode('gbk'), 'w') as f:
-		f.write('景区情况：\n'.decode())
+	with open(defaultPath + '【每日销售情况汇报-'.decode('utf-8').encode('gbk') + time.strftime("%m.%d", time.localtime()) + '】.txt'.decode('utf-8').encode('gbk'), 'w') as f:
+		f.write('【每日销售情况汇报-'.decode() + time.strftime("%m.%d", time.localtime()) + '】\n\n'.decode())
+		f.write('一、景区情况：\n'.decode())
 		f.write('订单人数：'.decode() + str(int(order_person_sum)) + '张\n'.decode())
 		f.write('流水金额：'.decode() + str(sales_amount_sum) + '元\n'.decode())
 		f.write('实际营收：'.decode() + str(sales_invoice_sum) + '元（可开发票）\n'.decode())
