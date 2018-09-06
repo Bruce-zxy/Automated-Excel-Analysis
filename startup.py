@@ -26,11 +26,11 @@ supplier_all_invoices_provide              = []
 object_index                               = ''
 
 def AnalysisExcel(browser):
-	print('【###】正在打开Excel文件：'.decode('utf-8').encode('gbk') + handleFile)
+	print('【...】正在打开Excel文件：'.decode('utf-8').encode('gbk') + handleFile)
 
 	if not os.path.exists(handleFile):
 		time.sleep(5)
-		print('Excel文件不存在，可能正在下载中...请稍候...'.decode('utf-8').encode('gbk'))
+		print('【!!!】Excel文件不存在，可能正在下载中，请稍候...'.decode('utf-8').encode('gbk'))
 		return AnalysisExcel(browser)
 	else:
 		browser.quit()
@@ -93,11 +93,12 @@ def AnalysisExcel(browser):
 		elif curr_val[supplier_index] in supplier_partial_invoices_provide.keys():
 			item = supplier_partial_invoices_provide[curr_val[supplier_index]]
 			result = True
-			for j in xrange(0, len(item)-1):
-				if item[j] in curr_val[productName_index]:
-					result = result and True
-				else :
-					result = result and False
+			for j in xrange(0, len(item)):
+				for k in xrange(0,len(item[j])):
+					if item[j][k] in curr_val[productName_index]:
+						result = result and True
+					else :
+						result = result and False
 			if result:
 				sales_invoice_sum += curr_val[salesAmount_index]
 
@@ -132,7 +133,7 @@ def AnalysisExcel(browser):
 	# os.remove(handleFile)
 
 def GetSupplierAllInvoicesProvide(browser):
-	print('【###】正在获取能全部开发票的供应商列表...'.decode('utf-8').encode('gbk'))
+	print('【...】正在获取能全部开发票的供应商列表...'.decode('utf-8').encode('gbk'))
 	with io.open(supplier_all_invoices_provide_filename, 'r') as f:
 		for line in f.readlines():
 			line = line.strip("\r\n")
@@ -143,21 +144,21 @@ def GetSupplierAllInvoicesProvide(browser):
 	AnalysisExcel(browser)
 
 def GetSupplierPartialInvoicesProvide(browser):
-	print('【###】正在获取能部分开发票的供应商列表...'.decode('utf-8').encode('gbk'))
+	print('【...】正在获取能部分开发票的供应商列表...'.decode('utf-8').encode('gbk'))
 	with io.open(supplier_partial_invoices_provide_filename, 'r') as f:
 		for line in f.readlines():
 			line = line.strip("\r\n")
 			if line.strip()=='':
 				continue
 			elif line[0] == "#":
-				object_index = line[1:-1]
+				object_index = line[1:]
 				supplier_partial_invoices_provide[object_index] = []
 			else :
 				supplier_partial_invoices_provide[object_index].append(line.split('，'))
 	GetSupplierAllInvoicesProvide(browser)
 
 def GetClassificationOfTheScenic(browser):
-	print('【###】正在获取所有景区的分类...'.decode('utf-8').encode('gbk'))
+	print('【...】正在获取所有景区的分类...'.decode('utf-8').encode('gbk'))
 	with io.open(classification_of_the_scenic_filename, 'r') as f:
 		for line in f.readlines():
 			line = line.strip("\r\n")
@@ -172,8 +173,8 @@ def GetClassificationOfTheScenic(browser):
 
 
 def startWebdriver(uname, upass):
-	print("您在config.txt中配置的【用户名】为：".decode('UTF-8').encode('GBK') + uname)
-	print("您在config.txt中配置的【密  码】为：".decode('UTF-8').encode('GBK') + upass)
+	print("【###】您在config.txt中配置的【用户名】为：".decode('UTF-8').encode('GBK') + uname)
+	print("【###】您在config.txt中配置的【密  码】为：".decode('UTF-8').encode('GBK') + upass)
 	# 配置浏览器驱动
 	options = webdriver.ChromeOptions()
 	# options.set_headless()
@@ -219,7 +220,11 @@ def startWebdriver(uname, upass):
 	
 def main():
 	if os.path.exists(handleFile):
-		os.remove(handleFile)
+		try: 
+			os.remove(handleFile)
+		except Exception as e:
+			print('【!!!】请检查下列文件是否被其他程序占用！'.decode('utf-8').encode('gbk') + handleFile)
+			return
 	try:
 		userInfo = []
 		f=open(defaultPath + 'config.txt', 'r')
