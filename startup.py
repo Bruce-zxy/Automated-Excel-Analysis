@@ -80,7 +80,7 @@ def AnalysisExcel(browser):
 			continue
 		elif '已取消' in curr_val[orderState_index] or '待支付' in curr_val[orderState_index]:
 			continue
-		elif '床' in curr_val[productName_index]:
+		elif '云锦庄' in curr_val[productName_index]:
 			continue
 
 		# 统计人数和流水金额
@@ -122,14 +122,20 @@ def AnalysisExcel(browser):
 		f.write('【每日销售情况汇报-'.decode() + time.strftime("%m.%d", time.localtime()) + '】\n\n'.decode())
 		f.write('一、景区情况：\n'.decode())
 		f.write('订单人数：'.decode() + str(int(order_person_sum)) + '张\n'.decode())
-		f.write('流水金额：'.decode() + str(sales_amount_sum) + '元\n'.decode())
-		f.write('实际营收：'.decode() + str(sales_invoice_sum) + '元（可开发票）\n'.decode())
+		f.write('流水金额：'.decode() + str(int(sales_amount_sum)) + '元\n'.decode())
+		f.write('实际营收：'.decode() + str(int(sales_invoice_sum)) + '元（可开发票）\n'.decode())
 		serial = 1
+		text = ''
 		for kind in excel_scenic_sum:
-			f.write('\n'.decode() + str(serial) + '.'.decode() + kind + '销量：\n'.decode())
+			text += '\n'.decode() + str(serial) + '.'.decode() + kind + '销量：\n'.decode()
 			serial += 1
 			for scenic_name in excel_scenic_sum[kind]:
-				f.write(scenic_name + str(excel_scenic_sum[kind][scenic_name]) + '张\n'.decode())
+				if scenic_name == '丫山':
+					text += scenic_name + '助销客销售中、'.decode()
+				else :
+					text += scenic_name + str(excel_scenic_sum[kind][scenic_name]) + '张、'.decode()
+			text = text[:-1] + '\n'
+		f.write(text)
 	# os.remove(handleFile)
 
 def GetSupplierAllInvoicesProvide(browser):
