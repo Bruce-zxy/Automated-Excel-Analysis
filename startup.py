@@ -2,8 +2,8 @@
 import sys
 import os
 import io
-import time
 import operator
+from time import strftime, localtime, sleep
 from selenium import webdriver
 from xlrd import open_workbook
 from functools import reduce
@@ -12,9 +12,13 @@ from functools import reduce
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+YY = str(int(strftime("%Y", localtime())))
+mm = str(int(strftime("%m", localtime())))
+dd = str(int(strftime("%d", localtime())) - 1)
+
 # 默认下载地址
 defaultPath = os.getcwd() + '\\'
-handleFile  = defaultPath + time.strftime("%Y-%m-%d", time.localtime()) + '.order.xls'
+handleFile  = defaultPath + (YY+'-'+mm+'-'+dd) + '.order.xls'
 
 # 全局变量
 classification_of_the_scenic_filename      = defaultPath + '景区分类.txt'.decode('utf-8').encode('gbk')
@@ -29,7 +33,7 @@ def AnalysisExcel(browser):
 	print('【...】正在打开Excel文件：'.decode('utf-8').encode('gbk') + handleFile)
 
 	if not os.path.exists(handleFile):
-		time.sleep(5)
+		sleep(5)
 		print('【!!!】Excel文件不存在，可能正在下载中，请稍候...'.decode('utf-8').encode('gbk'))
 		return AnalysisExcel(browser)
 	else:
@@ -118,8 +122,8 @@ def AnalysisExcel(browser):
 					excel_scenic_sum[kind][name] = int(curr_val[orderPerson_index])
 
 
-	with open(defaultPath + '【每日销售情况汇报-'.decode('utf-8').encode('gbk') + time.strftime("%m.%d", time.localtime()) + '】.txt'.decode('utf-8').encode('gbk'), 'w') as f:
-		f.write('【每日销售情况汇报-'.decode() + time.strftime("%m.%d", time.localtime()) + '】\n\n'.decode())
+	with open(defaultPath + '【每日销售情况汇报-'.decode('utf-8').encode('gbk') + (mm+'.'+dd) + '】.txt'.decode('utf-8').encode('gbk'), 'w') as f:
+		f.write('【每日销售情况汇报-'.decode() + (mm+'.'+dd) + '】\n\n'.decode())
 		f.write('一、景区情况：\n'.decode())
 		f.write('订单人数：'.decode() + str(int(order_person_sum)) + '张\n'.decode())
 		f.write('流水金额：'.decode() + str(int(sales_amount_sum)) + '元\n'.decode())
@@ -213,12 +217,19 @@ def startWebdriver(uname, upass):
 	browser.switch_to_frame(browser.find_element_by_name('fracmd'))
 	browser.find_element_by_id('12').find_element_by_tag_name('a').click()
 
-	# 切换回主内容
+	# 切换回主内容`
 	browser.switch_to_default_content()
 
 	# 切换frame
 	browser.switch_to_frame(browser.find_element_by_name('main'))
-	browser.find_elements_by_css_selector('#day_span a')[0].click()
+	# browser.find_elements_by_css_selector('#day_span a')[1].click()
+	sdate = browser.find_element_by_id('sdate')
+	sdate.clear()
+	sdate.send_keys(YY+'-'+mm+'-'+dd)
+
+	edate = browser.find_element_by_id('edate')
+	edate.clear()
+	edate.send_keys(YY+'-'+mm+'-'+dd)
 	browser.find_element_by_name('export').click()
 
 	# 将导出的表进行分析
