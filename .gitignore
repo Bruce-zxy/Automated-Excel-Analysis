@@ -68,3 +68,7 @@ typings/
 *.xls
 *.txt
 !*.exe
+
+dist
+build
+*.spec
